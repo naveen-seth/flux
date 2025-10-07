@@ -1,4 +1,4 @@
-name: windows
+name: Windows CI
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     strategy:
       matrix:
         platform: [x86, x64]
@@ -21,25 +21,20 @@ jobs:
       with:
         arch: ${{matrix.platform}}
 
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build
-
     - name: Configure
       # Use a bash shell for $GITHUB_WORKSPACE.
       shell: bash
-      working-directory: ${{runner.workspace}}/build
       run: |
-        cmake -G Ninja \
+        cmake -B build -G Ninja \
               -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-              -DFLUX_BUILD_BENCHMARKS=${{matrix.build_type == 'Release'}} \
-              $GITHUB_WORKSPACE
+              -DCMAKE_CXX_EXTENSIONS=Off \
+              -DFLUX_BUILD_BENCHMARKS=${{matrix.build_type == 'Release'}}
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config ${{matrix.build_type}}
+      run: cmake --build build --config ${{matrix.build_type}}
 
     - name: Test
-      working-directory: ${{runner.workspace}}/build
+      working-directory: ${{github.workspace}}/build
       run: ctest -C ${{matrix.build_type}} -V
       env:
         CTEST_OUTPUT_ON_FAILURE: True
