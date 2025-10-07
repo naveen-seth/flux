@@ -23,7 +23,11 @@ jobs:
       run: |
         brew install gcc@15 lcov ninja binutils
         brew link --force binutils
-        cmake -B build -GNinja -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+        cmake -B build -GNinja \
+          -DCMAKE_CXX_COMPILER=g++-15 \
+          -DCMAKE_CXX_FLAGS="--coverage" \
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+          -DFLUX_BUILD_EXAMPLES=Off
         cmake --build build
 
     - name: Run tests
