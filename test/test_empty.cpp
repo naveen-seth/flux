@@ -5,6 +5,7 @@
 
 #include <doctest/doctest.h>
 
+#include <compare>
 #include <concepts>
 
 #ifdef USE_MODULES
