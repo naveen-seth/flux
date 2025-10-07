@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        sanitizer: [ubsan, asan]
+        sanitizer: [address, undefined]
         build_type: [Debug, Release]
         include:
-          - cxx: g++-14
+          - cxx: g++-15
             install: |
-              brew install gcc@14 ninja binutils
+              brew install gcc@15 ninja binutils
               brew link --force binutils
 
     steps:
@@ -28,23 +28,21 @@ jobs:
       - name: Create Build Environment
         run: |
           ${{matrix.install}}
-          cmake -E make_directory ${{runner.workspace}}/build
 
       - name: Configure
-        working-directory: ${{runner.workspace}}/build
         run: |
-          cmake -GNinja \
-                -DFLUX_ENABLE_ASAN=${{matrix.sanitizer == 'asan'}} \
-                -DFLUX_ENABLE_UBSAN=${{matrix.sanitizer == 'ubsan'}} \
-                -DCMAKE_CXX_COMPILER=g++-14 \
-                $GITHUB_WORKSPACE
+          cmake -B build -GNinja \
+                -DCMAKE_CXX_COMPILER=${{matrix.cxx}} \
+                -DCMAKE_CXX_EXTENSIONS=Off \
+                -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+                -DCMAKE_CXX_FLAGS="-fsanitize=${{matrix.sanitizer}}" \
+                -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=${{matrix.sanitizer}}"
 
       - name: Build
-        working-directory: ${{runner.workspace}}/build
-        run: cmake --build .
+        run: cmake --build build
 
       - name: Test
-        working-directory: ${{runner.workspace}}/build
+        working-directory: ${{github.workspace}}/build
         run: ctest -C ${{matrix.build_type}}
         env:
           CTEST_OUTPUT_ON_FAILURE: True
