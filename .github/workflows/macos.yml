@@ -1,7 +1,7 @@
 # Based on macos.yml from {fmt}
 # https://github.com/fmtlib/fmt/blob/master/.github/workflows/macos.yml
 
-name: macos
+name: MacOS CI
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
     runs-on: macos-15
     strategy:
       matrix:
-        compiler: [AppleClang, LLVM-Clang-16, LLVM-Clang-17, LLVM-Clang-18, LLVM-Clang-19, LLVM-Clang-20]
+        compiler: [AppleClang, LLVM-Clang-16, LLVM-Clang-17, LLVM-Clang-18, LLVM-Clang-19, LLVM-Clang-20, LLVM-Clang-21]
         test_with: [Headers, Module]
         build_type: [Debug, Release]
 
@@ -50,6 +50,12 @@ jobs:
             install: |
               brew update
               brew install llvm@20 ninja
+          - compiler: LLVM-Clang-21
+            cxx: $(brew --prefix llvm@21)/bin/clang++
+            ldflags: -L$(brew --prefix llvm@21)/lib/c++
+            install: |
+              brew update
+              brew install llvm@21 ninja
 
 
     steps:
@@ -58,23 +64,25 @@ jobs:
     - name: Create Build Environment
       run: |
         ${{matrix.install}}
-        cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Configure
-      working-directory: ${{runner.workspace}}/build
       run: |
-        cmake -GNinja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CXX_COMPILER=${{matrix.cxx}} \
-               -DFLUX_BUILD_BENCHMARKS=${{matrix.build_type == 'Release'}} \
-               -DFLUX_BUILD_MODULE=${{matrix.test_with == 'Module'}} \
-               -DFLUX_BUILD_TESTS_USING_MODULE=${{matrix.test_with == 'Module'}} \
-               $GITHUB_WORKSPACE
+        cmake -B build -GNinja \
+              -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+              -DCMAKE_CXX_COMPILER=${{matrix.cxx}} \
+              -DCMAKE_EXE_LINKER_FLAGS=${{matrix.ldflags}} \
+              -DCMAKE_CXX_EXTENSIONS=Off \
+              -DCMAKE_COMPILE_WARNING_AS_ERROR=On \
+              -DCMAKE_LINK_WARNING_AS_ERROR=On \
+              -DFLUX_BUILD_BENCHMARKS=${{matrix.build_type == 'Release'}} \
+              -DFLUX_BUILD_MODULE=${{matrix.test_with == 'Module'}} \
+              -DFLUX_BUILD_TESTS_USING_MODULE=${{matrix.test_with == 'Module'}}
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config ${{matrix.build_type}}
+      run: cmake --build build --config ${{matrix.build_type}}
 
     - name: Test
-      working-directory: ${{runner.workspace}}/build
+      working-directory: ${{github.workspace}}/build
       run: ctest -C ${{matrix.build_type}}
       env:
         CTEST_OUTPUT_ON_FAILURE: True
