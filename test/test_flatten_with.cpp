@@ -6,6 +6,7 @@
 #include <array>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 #include <iostream>
@@ -76,7 +77,7 @@ constexpr bool test_flatten_with_single_pass()
         std::array<std::string_view, 6> arr{
             "123"sv, ""sv, "456"sv, ""sv, "7"sv, "89"sv
         };
-        
+
         auto seq = single_pass_only(std::move(arr)).flatten_with('-');
 
         using S = decltype(seq);

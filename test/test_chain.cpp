@@ -7,6 +7,7 @@
 #include <array>
 #include <iostream>
 #include <utility>
+#include <variant>
 
 #include "test_utils.hpp"
 

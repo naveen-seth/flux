@@ -40,7 +40,7 @@ public:
                 -> std::strong_ordering
                 requires std::three_way_comparable<cursor_t<Base>, std::strong_ordering>
             {
-                return rhs <=> lhs;
+                return rhs.base_cur <=> lhs.base_cur;
             }
         };
 

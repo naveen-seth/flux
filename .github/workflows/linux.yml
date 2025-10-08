@@ -1,4 +1,4 @@
-name: linux
+name: Linux CI
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [GCC-12, GCC-13, GCC-14, GCC-15, Clang-17, Clang-18, Clang-19, Clang-20]
+        compiler: [GCC-12, GCC-13, GCC-14, GCC-15, Clang-17, Clang-18, Clang-19, Clang-20, Clang-21]
         test_with: [Headers, Module]
         build_type: [Debug, Release]
 
@@ -21,8 +21,6 @@ jobs:
           - compiler: GCC-13
             test_with: Module
           - compiler: GCC-14
-            test_with: Module
-          - compiler: GCC-15
             test_with: Module
           - compiler: Clang-17
             test_with: Module
@@ -68,6 +66,11 @@ jobs:
             install: |
               brew install llvm@20 ninja binutils
               brew link --force binutils
+          - compiler: Clang-21
+            cxx: $(brew --prefix llvm@21)/bin/clang++
+            install: |
+              brew install llvm@21 ninja binutils
+              brew link --force binutils
 
     steps:
     - uses: actions/checkout@master
@@ -78,23 +81,22 @@ jobs:
     - name: Create Build Environment
       run: |
         ${{matrix.install}}
-        cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Configure
-      working-directory: ${{runner.workspace}}/build
       run: |
-        cmake -GNinja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CXX_COMPILER=${{matrix.cxx}} \
+        cmake -B build -GNinja \
+              -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+              -DCMAKE_CXX_COMPILER=${{matrix.cxx}} \
+              -DCMAKE_CXX_EXTENSIONS=Off \
               -DFLUX_BUILD_BENCHMARKS=${{matrix.build_type == 'Release'}} \
               -DFLUX_BUILD_MODULE=${{matrix.test_with == 'Module'}} \
-              -DFLUX_BUILD_TESTS_USING_MODULE=${{matrix.test_with == 'Module'}} \
-              $GITHUB_WORKSPACE
+              -DFLUX_BUILD_TESTS_USING_MODULE=${{matrix.test_with == 'Module'}}
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build .
+      run: cmake --build build
 
     - name: Test
-      working-directory: ${{runner.workspace}}/build
+      working-directory: ${{github.workspace}}/build
       run: ctest -C ${{matrix.build_type}}
       env:
         CTEST_OUTPUT_ON_FAILURE: True
