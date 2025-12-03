@@ -16,4 +16,4 @@ target_sources(flux-mod PUBLIC
 
 target_link_libraries(flux-mod PRIVATE flux)
 target_compile_features(flux-mod PUBLIC $<IF:$<CXX_COMPILER_ID:MSVC>,cxx_std_23,cxx_std_20>)
-set_target_properties(flux-mod PROPERTIES CXX_EXTENSIONS Off)
+set_target_properties(flux-mod PROPERTIES CXX_EXTENSIONS ON)
